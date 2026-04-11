@@ -63,9 +63,9 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
 
-        Authentication authenticate = authenticate(loginRequest);
+        Authentication authentication= authenticate(loginRequest);
         User user = userRepository.findByEmail(loginRequest.email()).orElseThrow(() -> new BadCredentialsException("User not found with given email id"));
-        if (!user.isEnable()) {
+        if (!user.isEnable() || !authentication.isAuthenticated()) {
             throw new DisabledException("User account is disabled");
         }
 
