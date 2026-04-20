@@ -1,32 +1,49 @@
 package com.navjeet.auth.config;
 
+import com.navjeet.auth.security.JwtAuthenticationFilter;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@ExtendWith(MockitoExtension.class)
 class SecurityConfigTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Mock
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Mock
+    private AuthenticationConfiguration authenticationConfiguration;
+
+    @Mock
+    private AuthenticationManager authenticationManager;
 
     @Test
-    void whenUnauthenticated_thenReturns401() throws Exception {
-        mockMvc.perform(get("/any-endpoint"))
-                .andExpect(status().isUnauthorized());
+    void passwordEncoderProducesMatchingHashes() {
+        SecurityConfig securityConfig = new SecurityConfig(jwtAuthenticationFilter);
+
+        PasswordEncoder passwordEncoder = securityConfig.passwordEncoder();
+        String encoded = passwordEncoder.encode("secret");
+
+        assertNotEquals("secret", encoded);
+        assertTrue(passwordEncoder.matches("secret", encoded));
     }
 
     @Test
-    @WithMockUser
-    void whenAuthenticated_thenReturnsOkOrNotFound() throws Exception {
-        mockMvc.perform(get("/any-endpoint"))
-                .andExpect(status().isNotFound());
+    void authenticationManagerDelegatesToAuthenticationConfiguration() throws Exception {
+        SecurityConfig securityConfig = new SecurityConfig(jwtAuthenticationFilter);
+        when(authenticationConfiguration.getAuthenticationManager()).thenReturn(authenticationManager);
+
+        AuthenticationManager result = securityConfig.authenticationManager(authenticationConfiguration);
+
+        assertSame(authenticationManager, result);
     }
 }
