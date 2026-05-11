@@ -31,6 +31,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -120,18 +121,86 @@ class Oauth2SuccessHandlerTest {
         assertEquals("Authentication successful", response.getContentAsString());
     }
 
-    private OAuth2AuthenticationToken googleAuthentication() {
+    @Test
+    void onAuthenticationSuccessCreatesGithubUserAndIssuesRefreshToken() throws Exception {
+        User savedUser = User.builder()
+                .id(UUID.randomUUID())
+                .email("github@example.com")
+                .name("github-login")
+                .provider(Provider.GITHUB)
+                .providerId("12345")
+                .build();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        when(userRepository.findByEmail("github@example.com")).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(jwtService.getRefreshTtlSeconds()).thenReturn(3600L);
+        when(jwtService.generateRefreshToken(eq(savedUser), anyString())).thenReturn("github-refresh-token");
+
+        handler.onAuthenticationSuccess(new MockHttpServletRequest(), response, githubAuthentication());
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(userCaptor.capture());
+        User newUser = userCaptor.getValue();
+        assertEquals("github@example.com", newUser.getEmail());
+        assertEquals("github-login", newUser.getName());
+        assertEquals("12345", newUser.getProviderId());
+        assertEquals("https://example.com/github-avatar.png", newUser.getImage());
+        assertEquals(Provider.GITHUB, newUser.getProvider());
+
+        ArgumentCaptor<RefreshToken> refreshTokenCaptor = ArgumentCaptor.forClass(RefreshToken.class);
+        verify(refreshTokenRepository).save(refreshTokenCaptor.capture());
+        RefreshToken refreshToken = refreshTokenCaptor.getValue();
+        assertNotNull(refreshToken.getJti());
+        assertSame(savedUser, refreshToken.getUser());
+
+        verify(jwtService).generateRefreshToken(eq(savedUser), eq(refreshToken.getJti()));
+        verify(cookieService).attachRefreshTokenToCookie(response, "github-refresh-token", 3600);
+        assertEquals("Authentication successful", response.getContentAsString());
+    }
+
+    @Test
+    void onAuthenticationSuccessIgnoresUnsupportedProvider() throws Exception {
         DefaultOAuth2User oauth2User = new DefaultOAuth2User(
                 List.of(new SimpleGrantedAuthority("ROLE_USER")),
-                Map.of(
-                        "sub", "google-sub",
-                        "email", "user@example.com",
-                        "name", "Test User",
-                        "picture", "https://example.com/avatar.png"
-                ),
+                Map.of("sub", "provider-user"),
                 "sub"
         );
+        OAuth2AuthenticationToken authentication =
+                new OAuth2AuthenticationToken(oauth2User, oauth2User.getAuthorities(), "facebook");
+        MockHttpServletResponse response = new MockHttpServletResponse();
 
-        return new OAuth2AuthenticationToken(oauth2User, oauth2User.getAuthorities(), "google");
+        handler.onAuthenticationSuccess(new MockHttpServletRequest(), response, authentication);
+
+        verifyNoInteractions(userRepository, refreshTokenRepository, jwtService, cookieService);
+        assertEquals("", response.getContentAsString());
+    }
+
+    private OAuth2AuthenticationToken googleAuthentication() {
+        return authentication("google", "sub", Map.of(
+                "sub", "google-sub",
+                "email", "user@example.com",
+                "name", "Test User",
+                "picture", "https://example.com/avatar.png"
+        ));
+    }
+
+    private OAuth2AuthenticationToken githubAuthentication() {
+        return authentication("github", "id", Map.of(
+                "id", 12345,
+                "email", "github@example.com",
+                "login", "github-login",
+                "avatar_url", "https://example.com/github-avatar.png"
+        ));
+    }
+
+    private OAuth2AuthenticationToken authentication(String registrationId, String nameAttributeKey, Map<String, Object> attributes) {
+        DefaultOAuth2User oauth2User = new DefaultOAuth2User(
+                List.of(new SimpleGrantedAuthority("ROLE_USER")),
+                attributes,
+                nameAttributeKey
+        );
+
+        return new OAuth2AuthenticationToken(oauth2User, oauth2User.getAuthorities(), registrationId);
     }
 }

@@ -36,6 +36,12 @@ spring:
               - email
               - profile
               - openid
+          github:
+            client-id: ${GITHUB_CLIENT_ID:test-client-id}
+            client-secret: ${GITHUB_CLIENT_SECRET:test-client-secret}
+            scope:
+              - user:email
+              - read:user
 
 
 

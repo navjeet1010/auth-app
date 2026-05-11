@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -35,41 +36,76 @@ public class Oauth2SuccessHandler implements AuthenticationSuccessHandler {
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        OAuth2User oAuth2User = (OAuth2User)authentication.getPrincipal();
-        String registrationId = "unknown";
-        if(authentication instanceof OAuth2AuthenticationToken token) {
-            registrationId = token.getAuthorizedClientRegistrationId();
-        }
-        User user;
-        switch (registrationId){
-            case "google" -> {
-                String googleId = oAuth2User.getAttributes().getOrDefault("sub", "").toString();
-                String email = oAuth2User.getAttributes().getOrDefault("email", "").toString();
-                String name = oAuth2User.getAttributes().getOrDefault("name", "").toString();
-                User newUser = User.builder()
-                        .email(email)
-                        .name(name)
-                        .providerId(googleId)
-                        .image(oAuth2User.getAttributes().getOrDefault("picture", "default-profile.png").toString())
-                        .provider(Provider.GOOGLE)
-                        .build();
-                user = userRepository.findByEmail(email).orElseGet(() -> userRepository.save(newUser));
-                String jti = UUID.randomUUID().toString();
-                RefreshToken refreshTokenOb = RefreshToken.builder()
-                        .jti(jti)
-                        .user(user)
-                        .createdAt(Instant.now())
-                        .expiresAt(Instant.now().plusSeconds(jwtService.getRefreshTtlSeconds()))
-                        .revoked(false)
-                        .build();
-                refreshTokenRepository.save(refreshTokenOb);
-                String refreshTokenString = jwtService.generateRefreshToken(user, jti);
-                cookieService.attachRefreshTokenToCookie(response, refreshTokenString, (int) jwtService.getRefreshTtlSeconds());
-                response.getWriter().write("Authentication successful");
+        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+        String registrationId = getRegistrationId(authentication);
+        User newUser = buildUser(registrationId, oAuth2User.getAttributes());
 
-            }
-            default -> logger.warn("Unsupported OAuth2 provider: {}", registrationId);
+        if (newUser == null) {
+            logger.warn("Unsupported OAuth2 provider: {}", registrationId);
+            return;
         }
 
+        User user = userRepository.findByEmail(newUser.getEmail())
+                .orElseGet(() -> userRepository.save(newUser));
+        issueRefreshToken(response, user);
+        response.getWriter().write("Authentication successful");
+    }
+
+    private String getRegistrationId(Authentication authentication) {
+        if (authentication instanceof OAuth2AuthenticationToken token) {
+            return token.getAuthorizedClientRegistrationId();
+        }
+
+        return "unknown";
+    }
+
+    private User buildUser(String registrationId, Map<String, Object> attributes) {
+        return switch (registrationId) {
+            case "google" -> buildUser(
+                    getAttribute(attributes, "email"),
+                    getAttribute(attributes, "name"),
+                    getAttribute(attributes, "sub"),
+                    getAttribute(attributes, "picture"),
+                    Provider.GOOGLE
+            );
+            case "github" -> buildUser(
+                    getAttribute(attributes, "email"),
+                    getAttribute(attributes, "login"),
+                    getAttribute(attributes, "id"),
+                    getAttribute(attributes, "avatar_url"),
+                    Provider.GITHUB
+            );
+            default -> null;
+        };
+    }
+
+    private User buildUser(String email, String name, String providerId, String image, Provider provider) {
+        return User.builder()
+                .email(email)
+                .name(name)
+                .providerId(providerId)
+                .image(image)
+                .provider(provider)
+                .build();
+    }
+
+    private String getAttribute(Map<String, Object> attributes, String key) {
+        return attributes.getOrDefault(key, "").toString();
+    }
+
+    private void issueRefreshToken(HttpServletResponse response, User user) throws IOException {
+        String jti = UUID.randomUUID().toString();
+        long refreshTtlSeconds = jwtService.getRefreshTtlSeconds();
+        RefreshToken refreshTokenOb = RefreshToken.builder()
+                .jti(jti)
+                .user(user)
+                .createdAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(refreshTtlSeconds))
+                .revoked(false)
+                .build();
+        refreshTokenRepository.save(refreshTokenOb);
+
+        String refreshTokenString = jwtService.generateRefreshToken(user, jti);
+        cookieService.attachRefreshTokenToCookie(response, refreshTokenString, (int) refreshTtlSeconds);
     }
 }
