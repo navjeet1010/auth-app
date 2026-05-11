@@ -4,6 +4,7 @@ package com.navjeet.auth.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.navjeet.auth.dtos.ApiError;
 import com.navjeet.auth.security.JwtAuthenticationFilter;
+import com.navjeet.auth.security.Oauth2FailureHandler;
 import com.navjeet.auth.security.Oauth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -29,6 +30,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final Oauth2SuccessHandler oauth2SuccessHandler;
+    private final Oauth2FailureHandler oauth2FailureHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -43,7 +45,9 @@ public class SecurityConfig {
                                 .requestMatchers("/api/v1/auth/logout").permitAll()
                                 .anyRequest()
                                 .authenticated())
-                .oauth2Login(oauth2 -> oauth2.successHandler(oauth2SuccessHandler).failureHandler(null))
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oauth2SuccessHandler)
+                        .failureHandler(oauth2FailureHandler))
                 .exceptionHandling(ex ->
                         ex.authenticationEntryPoint((request,
                                                      response,
@@ -77,4 +81,3 @@ public class SecurityConfig {
     }
 
 }
-

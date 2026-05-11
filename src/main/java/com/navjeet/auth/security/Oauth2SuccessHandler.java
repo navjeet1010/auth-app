@@ -9,6 +9,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -22,6 +24,8 @@ import java.util.UUID;
 @Component
 @AllArgsConstructor
 public class Oauth2SuccessHandler implements AuthenticationSuccessHandler {
+    private static final Logger logger = LoggerFactory.getLogger(Oauth2SuccessHandler.class);
+
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final CookieService cookieService;
@@ -58,14 +62,13 @@ public class Oauth2SuccessHandler implements AuthenticationSuccessHandler {
                         .expiresAt(Instant.now().plusSeconds(jwtService.getRefreshTtlSeconds()))
                         .revoked(false)
                         .build();
-                System.out.println("RefreshToken " + refreshTokenOb);
                 refreshTokenRepository.save(refreshTokenOb);
                 String refreshTokenString = jwtService.generateRefreshToken(user, jti);
                 cookieService.attachRefreshTokenToCookie(response, refreshTokenString, (int) jwtService.getRefreshTtlSeconds());
                 response.getWriter().write("Authentication successful");
 
             }
-            default -> System.out.println("Unsupported provider: " + registrationId);
+            default -> logger.warn("Unsupported OAuth2 provider: {}", registrationId);
         }
 
     }

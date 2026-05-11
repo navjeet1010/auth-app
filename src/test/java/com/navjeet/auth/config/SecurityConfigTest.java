@@ -1,6 +1,8 @@
 package com.navjeet.auth.config;
 
 import com.navjeet.auth.security.JwtAuthenticationFilter;
+import com.navjeet.auth.security.Oauth2FailureHandler;
+import com.navjeet.auth.security.Oauth2SuccessHandler;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -21,6 +23,12 @@ class SecurityConfigTest {
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Mock
+    private Oauth2SuccessHandler oauth2SuccessHandler;
+
+    @Mock
+    private Oauth2FailureHandler oauth2FailureHandler;
+
+    @Mock
     private AuthenticationConfiguration authenticationConfiguration;
 
     @Mock
@@ -28,7 +36,7 @@ class SecurityConfigTest {
 
     @Test
     void passwordEncoderProducesMatchingHashes() {
-        SecurityConfig securityConfig = new SecurityConfig(jwtAuthenticationFilter);
+        SecurityConfig securityConfig = new SecurityConfig(jwtAuthenticationFilter, oauth2SuccessHandler, oauth2FailureHandler);
 
         PasswordEncoder passwordEncoder = securityConfig.passwordEncoder();
         String encoded = passwordEncoder.encode("secret");
@@ -39,7 +47,7 @@ class SecurityConfigTest {
 
     @Test
     void authenticationManagerDelegatesToAuthenticationConfiguration() throws Exception {
-        SecurityConfig securityConfig = new SecurityConfig(jwtAuthenticationFilter);
+        SecurityConfig securityConfig = new SecurityConfig(jwtAuthenticationFilter, oauth2SuccessHandler, oauth2FailureHandler);
         when(authenticationConfiguration.getAuthenticationManager()).thenReturn(authenticationManager);
 
         AuthenticationManager result = securityConfig.authenticationManager(authenticationConfiguration);
