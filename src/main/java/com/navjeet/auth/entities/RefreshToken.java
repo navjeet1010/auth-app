@@ -40,5 +40,4 @@ public class RefreshToken {
 
     private String replacementJti;
 
-
 }

@@ -9,7 +9,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.Instant;
 import java.util.*;
 
-
 @Getter
 @Setter
 @AllArgsConstructor
@@ -34,7 +33,6 @@ public class User implements UserDetails {
     private Instant createdAt = Instant.now();
     @Builder.Default
     private Instant updatedAt = Instant.now();
-
 
     @Enumerated(EnumType.STRING)
     @Builder.Default

@@ -71,5 +71,4 @@ public class CookieService {
         response.setHeader(HttpHeaders.PRAGMA, "no-cache");
     }
 
-
 }

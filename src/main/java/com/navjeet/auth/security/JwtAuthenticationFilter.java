@@ -47,7 +47,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UUID userUuid = UserUtil.parseUUID(userId);
                 userRepository.findById(userUuid).ifPresent(user -> {
 
-
                     if (user.isEnable()) {
                         List<GrantedAuthority> authorities = user.getRoles() == null ? List.of() : user.getRoles().stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
                         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user.getEmail(), null, authorities);
@@ -56,9 +55,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             SecurityContextHolder.getContext().setAuthentication(authentication);
                     }
 
-
                 });
-
 
             } catch (ExpiredJwtException e) {
                 request.setAttribute("error", "Token Expired");
@@ -68,11 +65,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             }
 
-
         }
 
         filterChain.doFilter(request, response);
-
 
     }
 

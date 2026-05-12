@@ -10,13 +10,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.util.UUID;
 
-
 @SpringBootApplication
 public class AuthAppApplication implements CommandLineRunner {
 
 	@Autowired
 	private RoleRepository roleRepository;
-
 
 	static void main(String[] args) {
 		SpringApplication.run(AuthAppApplication.class, args);

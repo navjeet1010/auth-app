@@ -32,8 +32,6 @@ public class Oauth2SuccessHandler implements AuthenticationSuccessHandler {
     private final CookieService cookieService;
     private final RefreshTokenRepository refreshTokenRepository;
 
-
-
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();

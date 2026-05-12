@@ -49,7 +49,6 @@ public class AuthController {
     private final RefreshTokenRepository refreshTokenRepository;
     private final CookieService cookieService;
 
-
     private Authentication authenticate(LoginRequest loginRequest) {
         try {
             return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password()));
@@ -80,17 +79,14 @@ public class AuthController {
 
         refreshTokenRepository.save(refreshTokenObject);
 
-
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user, refreshTokenObject.getJti());
 
         cookieService.attachRefreshTokenToCookie(response, refreshToken, (int) jwtService.getRefreshTtlSeconds());
         cookieService.addNoCacheHeaders(response);
 
-
         TokenResponse tokenResponse = TokenResponse.of(accessToken, refreshToken, jwtService.getAccessTtlSeconds(), userMapper.toDto(user));
         return ResponseEntity.ok(tokenResponse);
-
 
     }
 
@@ -138,7 +134,6 @@ public class AuthController {
         cookieService.attachRefreshTokenToCookie(response, newRefreshToken, (int) jwtService.getRefreshTtlSeconds());
         cookieService.addNoCacheHeaders(response);
         return ResponseEntity.ok(TokenResponse.of(newAccessToken, newRefreshToken, jwtService.getAccessTtlSeconds(), userMapper.toDto(user)));
-
 
     }
 

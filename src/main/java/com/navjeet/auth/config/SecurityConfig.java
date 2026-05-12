@@ -31,7 +31,6 @@ import static com.navjeet.auth.config.AppConstants.AUTH_PUBLIC_URLS;
 @EnableMethodSecurity(securedEnabled = true)
 public class SecurityConfig {
 
-
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final Oauth2SuccessHandler oauth2SuccessHandler;
     private final Oauth2FailureHandler oauth2FailureHandler;
@@ -89,7 +88,6 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {

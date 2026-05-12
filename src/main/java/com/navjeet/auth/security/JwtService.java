@@ -66,7 +66,6 @@ public class JwtService {
                 .compact();
     }
 
-
     public Jws<Claims> parse(String token) {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
     }
@@ -75,7 +74,6 @@ public class JwtService {
         Claims claims = parse(token).getPayload();
         return "access".equals(claims.get("typ"));
     }
-
 
     public boolean isRefreshToken(String token) {
         Claims claims = parse(token).getPayload();
