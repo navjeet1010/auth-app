@@ -3,6 +3,7 @@ package com.navjeet.auth.security;
 import com.navjeet.auth.entities.Role;
 import com.navjeet.auth.entities.User;
 import com.navjeet.auth.repositories.UserRepository;
+import com.navjeet.auth.services.JwtService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;

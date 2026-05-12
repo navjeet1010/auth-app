@@ -1,5 +1,6 @@
 package com.navjeet.auth.security;
 
+import com.navjeet.auth.services.impl.CookieServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -14,7 +15,7 @@ class CookieServiceTest {
 
     @Test
     void attachRefreshTokenAddsConfiguredCookieHeader() {
-        CookieService cookieService = new CookieService("refresh", true, true, "Strict", "example.com");
+        CookieServiceImpl cookieService = new CookieServiceImpl("refresh", true, true, "Strict", "example.com");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         cookieService.attachRefreshTokenToCookie(response, "token-value", 3600);
@@ -31,7 +32,7 @@ class CookieServiceTest {
 
     @Test
     void clearRefreshTokenCookieExpiresCookieImmediately() {
-        CookieService cookieService = new CookieService("refresh", true, false, "Lax", "");
+        CookieServiceImpl cookieService = new CookieServiceImpl("refresh", true, false, "Lax", "");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         cookieService.clearRefreshTokenCookie(response);
@@ -45,7 +46,7 @@ class CookieServiceTest {
 
     @Test
     void addNoCacheHeadersSetsExpectedValues() {
-        CookieService cookieService = new CookieService("refresh", true, false, "Lax", "");
+        CookieServiceImpl cookieService = new CookieServiceImpl("refresh", true, false, "Lax", "");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         cookieService.addNoCacheHeaders(response);

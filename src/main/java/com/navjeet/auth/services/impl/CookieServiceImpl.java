@@ -1,5 +1,6 @@
-package com.navjeet.auth.security;
+package com.navjeet.auth.services.impl;
 
+import com.navjeet.auth.services.CookieService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Getter
-public class CookieService {
+public class CookieServiceImpl implements CookieService {
 
     private final String refreshTokenCookieName;
     private final boolean cookieHttpOnly;
@@ -17,7 +18,7 @@ public class CookieService {
     private final String cookieSameSite;
     private final String cookieDomain;
 
-    public CookieService(
+    public CookieServiceImpl(
             @Value("${security.jwt.refresh-token-cookie-name}") String refreshTokenCookieName,
             @Value("${security.jwt.cookie-http-only}") boolean cookieHttpOnly,
             @Value("${security.jwt.cookie-secure}") boolean cookieSecure,
@@ -32,6 +33,7 @@ public class CookieService {
         this.cookieDomain = cookieDomain;
     }
 
+    @Override
     public void attachRefreshTokenToCookie(HttpServletResponse response, String refreshToken, int maxAge) {
 
         ResponseCookie.ResponseCookieBuilder cookieBuilder = ResponseCookie.from(refreshTokenCookieName, refreshToken)
@@ -50,6 +52,7 @@ public class CookieService {
 
     }
 
+    @Override
     public void clearRefreshTokenCookie(HttpServletResponse response) {
         ResponseCookie.ResponseCookieBuilder cookieBuilder = ResponseCookie.from(refreshTokenCookieName, "")
                 .httpOnly(cookieHttpOnly)
@@ -66,6 +69,7 @@ public class CookieService {
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
     }
 
+    @Override
     public void addNoCacheHeaders(HttpServletResponse response) {
         response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store, no-cache, must-revalidate, max-age=0");
         response.setHeader(HttpHeaders.PRAGMA, "no-cache");

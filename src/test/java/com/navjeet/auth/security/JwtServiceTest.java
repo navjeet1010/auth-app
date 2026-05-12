@@ -2,6 +2,7 @@ package com.navjeet.auth.security;
 
 import com.navjeet.auth.entities.Role;
 import com.navjeet.auth.entities.User;
+import com.navjeet.auth.services.impl.JwtServiceImpl;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
@@ -19,14 +20,14 @@ class JwtServiceTest {
     @Test
     void constructorRejectsShortSecret() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> new JwtService("short-secret", 60, 120, "issuer"));
+                () -> new JwtServiceImpl("short-secret", 60, 120, "issuer"));
 
         assertEquals("JWT secret is invalid. It must be at least 64 characters long.", exception.getMessage());
     }
 
     @Test
     void accessTokenContainsExpectedClaims() {
-        JwtService jwtService = new JwtService(SECRET, 60, 120, "issuer");
+        JwtServiceImpl jwtService = new JwtServiceImpl(SECRET, 60, 120, "issuer");
         UUID userId = UUID.randomUUID();
         User user = User.builder()
                 .id(userId)
@@ -45,7 +46,7 @@ class JwtServiceTest {
 
     @Test
     void refreshTokenContainsExpectedClaims() {
-        JwtService jwtService = new JwtService(SECRET, 60, 120, "issuer");
+        JwtServiceImpl jwtService = new JwtServiceImpl(SECRET, 60, 120, "issuer");
         UUID userId = UUID.randomUUID();
         User user = User.builder().id(userId).email("user@example.com").build();
 
