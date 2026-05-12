@@ -1,10 +1,13 @@
 package com.navjeet.auth.services.impl;
 
+import com.navjeet.auth.config.AppConstants;
 import com.navjeet.auth.dtos.UserDto;
 import com.navjeet.auth.entities.Provider;
+import com.navjeet.auth.entities.Role;
 import com.navjeet.auth.entities.User;
 import com.navjeet.auth.exceptions.ResourceNotFoundException;
 import com.navjeet.auth.mappers.UserMapper;
+import com.navjeet.auth.repositories.RoleRepository;
 import com.navjeet.auth.repositories.UserRepository;
 import com.navjeet.auth.services.UserService;
 import com.navjeet.auth.utils.UserUtil;
@@ -20,6 +23,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final RoleRepository roleRepository;
 
     @Override
     @Transactional
@@ -33,6 +37,9 @@ public class UserServiceImpl implements UserService {
 
         User user = userMapper.toEntity(userDto);
         user.setProvider(userDto.getProvider() != null ? userDto.getProvider() : Provider.LOCAL);
+
+        Role role = roleRepository.findByName("ROLE_"+ AppConstants.USER_ROLE).orElse(null);
+        user.getRoles().add(role);
 
         User savedUser = userRepository.save(user);
         return userMapper.toDto(savedUser);

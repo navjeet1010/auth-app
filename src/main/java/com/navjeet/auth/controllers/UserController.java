@@ -1,10 +1,12 @@
 package com.navjeet.auth.controllers;
 
+import com.navjeet.auth.config.AppConstants;
 import com.navjeet.auth.dtos.UserDto;
 import com.navjeet.auth.services.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -32,6 +34,7 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    @PreAuthorize("hasRole('"+ AppConstants.ADMIN_ROLE +"')")
     @GetMapping("/{userId}")
     public ResponseEntity<UserDto> getUserById(@PathVariable String userId) {
         UserDto user = userService.getUserById(userId);

@@ -2,9 +2,11 @@ package com.navjeet.auth.services.impl;
 
 import com.navjeet.auth.dtos.UserDto;
 import com.navjeet.auth.entities.Provider;
+import com.navjeet.auth.entities.Role;
 import com.navjeet.auth.entities.User;
 import com.navjeet.auth.exceptions.ResourceNotFoundException;
 import com.navjeet.auth.mappers.UserMapper;
+import com.navjeet.auth.repositories.RoleRepository;
 import com.navjeet.auth.repositories.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +35,9 @@ class UserServiceImplTest {
     @Mock
     private UserMapper userMapper;
 
+    @Mock
+    private RoleRepository roleRepository;
+
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -59,18 +64,23 @@ class UserServiceImplTest {
     @Test
     void createUserUsesLocalProviderWhenMissing() {
         UserDto userDto = UserDto.builder().email("user@example.com").provider(null).build();
-        User user = User.builder().email("user@example.com").build();
+        User user = new User();
+        user.setEmail("user@example.com");
+        Role userRole = Role.builder().name("ROLE_USER").build();
         User savedUser = User.builder().email("user@example.com").provider(Provider.LOCAL).build();
         UserDto savedDto = UserDto.builder().email("user@example.com").provider(Provider.LOCAL).build();
 
         when(userRepository.existsByEmail("user@example.com")).thenReturn(false);
         when(userMapper.toEntity(userDto)).thenReturn(user);
+        when(roleRepository.findByName("ROLE_USER")).thenReturn(Optional.of(userRole));
         when(userRepository.save(user)).thenReturn(savedUser);
         when(userMapper.toDto(savedUser)).thenReturn(savedDto);
 
         UserDto result = userService.createUser(userDto);
 
         assertEquals(Provider.LOCAL, user.getProvider());
+        assertEquals(1, user.getRoles().size());
+        assertEquals("ROLE_USER", user.getRoles().iterator().next().getName());
         assertEquals(savedDto, result);
     }
 
